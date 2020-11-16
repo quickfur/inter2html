@@ -81,6 +81,12 @@ unittest
 static immutable htmlPrologue = q"ENDHTML
 <html><head>
 <style type="text/css">
+body {
+    max-width: 60em;
+    display: table;
+    margin-left: auto;
+    margin-right: auto;
+}
 table.interlinear {
 	display:inline;
 }
