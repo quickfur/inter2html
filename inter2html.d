@@ -149,7 +149,7 @@ string[] genCssFont(FontConfig lcfg)
     if (lcfg.fontSize.length > 0)
         result ~= "font-size: %s;".format(lcfg.fontSize);
     if (lcfg.fontFamily.length > 0)
-        result ~= "font-family: \"%s\";".format(lcfg.fontFamily);
+        result ~= "font-family: %s;".format(lcfg.fontFamily);
     if (lcfg.color.length > 0)
         result ~= "color: %s;".format(lcfg.color);
     if (lcfg.bgColor.length > 0)
