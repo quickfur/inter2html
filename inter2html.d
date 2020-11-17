@@ -14,7 +14,7 @@ struct CssConfig
 
     string maxWidth;
     string wordSpacing;
-    string lineSpacing;
+    string lineHeight;
     LineConfig[] lines;
 }
 
@@ -107,15 +107,18 @@ static immutable cssBody = q"ENDCSS
     margin-right: auto;
 ENDCSS";
 
-static immutable cssTable = q"ENDCSS
+static immutable cssTableStart = q"ENDCSS
 table.interlinear {
-	display:inline;
+    display: inline;
+ENDCSS";
+
+static immutable cssTableEnd = q"ENDCSS
 }
 ENDCSS";
 
 static immutable cssSecHeader = q"ENDCSS
 h6 {
-	margin-bottom:0;
+    margin-bottom:0;
 }
 ENDCSS";
 
@@ -165,12 +168,30 @@ string genCss(CssConfig cfg)
         app.formattedWrite("    max-width: %s;\n", cfg.maxWidth);
     app.put("}\n");
 
-    app.put("div.interlinear {\n");
+    string[] divCss;
+    string[] subDivCss;
     if (cfg.wordSpacing.length > 0)
-        app.formattedWrite("    word-spacing: %s;\n", cfg.wordSpacing);
-    app.put("}\n");
+    {
+        divCss ~= format("    word-spacing: %s;", cfg.wordSpacing);
 
-    app.put(cssTable);
+        // Need to contramand top-level word-spacing so that it doesn't cascade
+        // to individual lines as well.
+        subDivCss ~= format("    word-spacing: initial;");
+    }
+    if (cfg.lineHeight.length > 0)
+    {
+        divCss ~= format("    line-height: %s;", cfg.lineHeight);
+        subDivCss ~= format("    line-height: initial;");
+    }
+
+    if (divCss.length > 0)
+        app.formattedWrite("div.interlinear {\n%-(%s\n%)\n}\n", divCss);
+    if (subDivCss.length > 0)
+        app.formattedWrite("div.interlinear td {\n%-(%s\n%)\n}\n", subDivCss);
+
+    app.put(cssTableStart);
+    app.put(cssTableEnd);
+
     app.put(cssSecHeader);
 
     foreach (i, lcfg; cfg.lines)
@@ -303,7 +324,7 @@ CssConfig parseCssConfig(R)(R lines)
             {
                 case "maxwidth":    cfg.maxWidth = value;   break;
                 case "wordspacing": cfg.wordSpacing = value;   break;
-                case "linespacing": cfg.lineSpacing = value;   break;
+                case "lineheight":  cfg.lineHeight = value;   break;
                 default:
                     throw new Exception("Unknown key: " ~ key.to!string);
             }
@@ -333,7 +354,7 @@ unittest
         "; Sample",
         "maxwidth=60em",
         "wordspacing=2em",
-        "linespacing=2ex",
+        "lineheight=2ex",
         "",
         "[line1]",
         "color=red",
@@ -347,7 +368,7 @@ unittest
 
     assert(cfg.maxWidth == "60em");
     assert(cfg.wordSpacing == "2em");
-    assert(cfg.lineSpacing == "2ex");
+    assert(cfg.lineHeight == "2ex");
 
     assert(cfg.lines.length == 2);
     assert(cfg.lines[0].color == "red");
