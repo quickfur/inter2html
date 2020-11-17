@@ -4,18 +4,20 @@
 module inter2html;
 import std;
 
+struct FontConfig
+{
+    string fontStyle, fontVariant, fontWeight, fontSize, fontFamily;
+    string color, bgColor;
+}
+
 struct CssConfig
 {
-    static struct LineConfig
-    {
-        string fontStyle, fontVariant, fontWeight, fontSize, fontFamily;
-        string color, bgColor;
-    }
-
     string maxWidth;
     string wordSpacing;
     string lineSpacing;
-    LineConfig[] lines;
+
+    FontConfig heading;
+    FontConfig[] lines;
 }
 
 struct Section
@@ -107,14 +109,6 @@ static immutable cssBody = q"ENDCSS
     margin-right: auto;
 ENDCSS";
 
-static immutable cssLineStart = q"ENDCSS
-.interlinear .line%d {
-ENDCSS";
-
-static immutable cssLineEnd = q"ENDCSS
-}
-ENDCSS";
-
 static immutable htmlSecHeading = q"ENDHTML
 <h6>%s</h6>
 ENDHTML";
@@ -142,6 +136,27 @@ ENDHTML";
 static immutable htmlEpilogue = q"ENDHTML
 </body></html>
 ENDHTML";
+
+string[] genCssFont(FontConfig lcfg)
+{
+    string[] result;
+    if (lcfg.fontStyle.length > 0)
+        result ~= "font-style: %s;".format(lcfg.fontStyle);
+    if (lcfg.fontVariant.length > 0)
+        result ~= "font-variant: %s;".format(lcfg.fontVariant);
+    if (lcfg.fontWeight.length > 0)
+        result ~= "font-weight: %s;".format(lcfg.fontWeight);
+    if (lcfg.fontSize.length > 0)
+        result ~= "font-size: %s;".format(lcfg.fontSize);
+    if (lcfg.fontFamily.length > 0)
+        result ~= "font-family: \"%s\";".format(lcfg.fontFamily);
+    if (lcfg.color.length > 0)
+        result ~= "color: %s;".format(lcfg.color);
+    if (lcfg.bgColor.length > 0)
+        result ~= "background: %s;".format(lcfg.bgColor);
+
+    return result;
+}
 
 string genCss(CssConfig cfg)
 {
@@ -183,6 +198,14 @@ string genCss(CssConfig cfg)
         //    "margin-top: -%s;".format(cfg.lineSpacing);
     }
 
+    css["h6"] ~= genCssFont(cfg.heading);
+
+    foreach (i, lcfg; cfg.lines)
+    {
+        auto sel = format(".interlinear .line%d", i);
+        css[sel] = genCssFont(lcfg);
+    }
+
     auto app = appender!string;
     foreach (selector; css.keys.sort)
     {
@@ -196,26 +219,6 @@ string genCss(CssConfig cfg)
             app.formattedWrite("    %s\n", prop);
         }
         app.put("}\n");
-    }
-
-    foreach (i, lcfg; cfg.lines)
-    {
-        app.formattedWrite(cssLineStart, i);
-        if (lcfg.fontStyle.length > 0)
-            app.formattedWrite("    font-style: %s;\n", lcfg.fontStyle);
-        if (lcfg.fontVariant.length > 0)
-            app.formattedWrite("    font-variant: %s;\n", lcfg.fontVariant);
-        if (lcfg.fontWeight.length > 0)
-            app.formattedWrite("    font-weight: %s;\n", lcfg.fontWeight);
-        if (lcfg.fontSize.length > 0)
-            app.formattedWrite("    font-size: %s;\n", lcfg.fontSize);
-        if (lcfg.fontFamily.length > 0)
-            app.formattedWrite("    font-family: %s;\n", lcfg.fontFamily);
-        if (lcfg.color.length > 0)
-            app.formattedWrite("    color: %s;\n", lcfg.color);
-        if (lcfg.bgColor.length > 0)
-            app.formattedWrite("    background: %s;\n", lcfg.bgColor);
-        app.formattedWrite(cssLineEnd);
     }
 
     return app.data.stripRight;
@@ -284,7 +287,7 @@ CssConfig parseCssConfig(R)(R lines)
 {
     CssConfig cfg;
     string section;
-    uint idx;
+    FontConfig* font;
 
     foreach (line; lines)
     {
@@ -300,6 +303,12 @@ CssConfig parseCssConfig(R)(R lines)
             assert(line.length >= 2);
             section = line[1 .. $-1].to!string;
 
+            if (section == "heading")
+            {
+                font = &cfg.heading;
+                continue;
+            }
+
             if (!section.startsWith("line"))
                 throw new Exception("Unknown section name: " ~
                                     section.to!string);
@@ -307,11 +316,11 @@ CssConfig parseCssConfig(R)(R lines)
             auto n = section[4 .. $].to!uint;
             if (n < 1)
                 throw new Exception("Invalid line number: " ~ n.to!string);
+            n--;
 
-            idx = n - 1;
-            if (cfg.lines.length <= idx)
-                cfg.lines.length = idx + 1;
-
+            if (cfg.lines.length <= n)
+                cfg.lines.length = n + 1;
+            font = &cfg.lines[n];
             continue;
         }
 
@@ -338,13 +347,13 @@ CssConfig parseCssConfig(R)(R lines)
         // Line config
         switch (key)
         {
-            case "fontstyle":   cfg.lines[idx].fontStyle = value;   break;
-            case "fontvariant": cfg.lines[idx].fontVariant = value; break;
-            case "fontweight":  cfg.lines[idx].fontWeight = value;  break;
-            case "fontsize":    cfg.lines[idx].fontSize = value;    break;
-            case "fontfamily":  cfg.lines[idx].fontFamily = value;  break;
-            case "color":       cfg.lines[idx].color = value;       break;
-            case "background":  cfg.lines[idx].bgColor = value;     break;
+            case "fontstyle":   font.fontStyle = value;     break;
+            case "fontvariant": font.fontVariant = value;   break;
+            case "fontweight":  font.fontWeight = value;    break;
+            case "fontsize":    font.fontSize = value;      break;
+            case "fontfamily":  font.fontFamily = value;    break;
+            case "color":       font.color = value;         break;
+            case "background":  font.bgColor = value;       break;
             default:
                 throw new Exception("Unknown key: " ~ key.to!string);
         }
@@ -366,6 +375,9 @@ unittest
         "",
         "[line2]",
         "fontsize=1.5em",
+        "",
+        "[heading]",
+        "fontfamily=sans-serif",
     ];
 
     auto cfg = parseCssConfig(input);
@@ -373,6 +385,8 @@ unittest
     assert(cfg.maxWidth == "60em");
     assert(cfg.wordSpacing == "2em");
     assert(cfg.lineSpacing == "2ex");
+
+    assert(cfg.heading.fontFamily == "sans-serif");
 
     assert(cfg.lines.length == 2);
     assert(cfg.lines[0].color == "red");
