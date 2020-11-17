@@ -107,21 +107,6 @@ static immutable cssBody = q"ENDCSS
     margin-right: auto;
 ENDCSS";
 
-static immutable cssTableStart = q"ENDCSS
-table.interlinear {
-    display: inline;
-ENDCSS";
-
-static immutable cssTableEnd = q"ENDCSS
-}
-ENDCSS";
-
-static immutable cssSecHeader = q"ENDCSS
-h6 {
-    margin-bottom:0;
-}
-ENDCSS";
-
 static immutable cssLineStart = q"ENDCSS
 .interlinear .line%d {
 ENDCSS";
@@ -160,41 +145,58 @@ ENDHTML";
 
 string genCss(CssConfig cfg)
 {
-    auto app = appender!string;
+    string[][string] css = [
+        "body": [
+            "display: table;",
+            "margin-left: auto;",
+            "margin-right: auto;",
+        ],
 
-    app.put("body {\n");
-    app.put(cssBody);
+        "table.interlinear": [
+            "display: inline;",
+        ],
+
+        "div.interlinear": [],
+        "div.interlinear td": [],
+        "table.interlinear tr:last-child td": [],
+
+        "h6": [
+            "margin-top: 1ex;",
+            "margin-bottom: 0;",
+        ],
+    ];
+
     if (cfg.maxWidth.length > 0)
-        app.formattedWrite("    max-width: %s;\n", cfg.maxWidth);
-    app.put("}\n");
+        css["body"] ~= "max-width: %s;".format(cfg.maxWidth);
 
-    string[] divCss;
-    string[] subDivCss;
     if (cfg.wordSpacing.length > 0)
     {
-        divCss ~= format("    word-spacing: %s;", cfg.wordSpacing);
-
-        // Need to contramand top-level word-spacing so that it doesn't cascade
-        // to individual lines as well.
-        subDivCss ~= format("    word-spacing: initial;");
+        css["div.interlinear"] ~= "word-spacing: %s;".format(cfg.wordSpacing);
+        css["div.interlinear td"] ~= "word-spacing: initial;";
     }
-
-    if (divCss.length > 0)
-        app.formattedWrite("div.interlinear {\n%-(%s\n%)\n}\n", divCss);
-    if (subDivCss.length > 0)
-        app.formattedWrite("div.interlinear td {\n%-(%s\n%)\n}\n", subDivCss);
 
     if (cfg.lineSpacing.length > 0)
     {
-        app.put("table.interlinear tr:last-child td {\n");
-        app.formattedWrite("    padding-bottom: %s;\n", cfg.lineSpacing);
-        app.put("}\n");
+        css["table.interlinear tr:last-child td"] ~=
+            "padding-bottom: %s;".format(cfg.lineSpacing);
+        //css["h6:not(:first-child)"] ~=
+        //    "margin-top: -%s;".format(cfg.lineSpacing);
     }
 
-    app.put(cssTableStart);
-    app.put(cssTableEnd);
+    auto app = appender!string;
+    foreach (selector; css.keys.sort)
+    {
+        auto props = css[selector];
+        if (props.length == 0)
+            continue;
 
-    app.put(cssSecHeader);
+        app.formattedWrite("%s {\n", selector);
+        foreach (prop; props)
+        {
+            app.formattedWrite("    %s\n", prop);
+        }
+        app.put("}\n");
+    }
 
     foreach (i, lcfg; cfg.lines)
     {
