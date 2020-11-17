@@ -4,6 +4,20 @@
 module inter2html;
 import std;
 
+struct CssConfig
+{
+    static struct LineConfig
+    {
+        string fontStyle, fontVariant, fontWeight, fontSize, fontFamily;
+        string color, bgColor;
+    }
+
+    string maxWidth;
+    string wordSpacing;
+    string lineSpacing;
+    LineConfig[] lines;
+}
+
 struct Section
 {
     string heading;
@@ -81,46 +95,125 @@ unittest
 static immutable htmlPrologue = q"ENDHTML
 <html><head>
 <style type="text/css">
-body {
-    max-width: 60em;
-    display: table;
-    margin-left: auto;
-    margin-right: auto;
-}
-table.interlinear {
-	display:inline;
-}
-h6 {
-	margin-bottom:0;
-}
+%s
 </style>
 </head>
 <body>
 ENDHTML";
 
+static immutable cssBody = q"ENDCSS
+    display: table;
+    margin-left: auto;
+    margin-right: auto;
+ENDCSS";
+
+static immutable cssTable = q"ENDCSS
+table.interlinear {
+	display:inline;
+}
+ENDCSS";
+
+static immutable cssSecHeader = q"ENDCSS
+h6 {
+	margin-bottom:0;
+}
+ENDCSS";
+
+static immutable cssLineStart = q"ENDCSS
+.interlinear .line%d {
+ENDCSS";
+
+static immutable cssLineEnd = q"ENDCSS
+}
+ENDCSS";
+
 static immutable htmlSecHeading = q"ENDHTML
 <h6>%s</h6>
 ENDHTML";
 
-static immutable htmlMorph = q"ENDHTML
-<table class="interlinear">%-(<tr><td>%s</td></tr>%|%)</table>
+static immutable htmlSecStart = q"ENDHTML
+<div class="interlinear">
+ENDHTML";
+
+static immutable htmlMorphStart = q"ENDHTML
+<table class="interlinear">
+ENDHTML";
+
+static immutable htmlMorphLine = q"ENDHTML
+<tr class="line%d"><td>%s</td></tr>
+ENDHTML";
+
+static immutable htmlMorphEnd = q"ENDHTML
+</table>
+ENDHTML";
+
+static immutable htmlSecEnd = q"ENDHTML
+</div>
 ENDHTML";
 
 static immutable htmlEpilogue = q"ENDHTML
 </body></html>
 ENDHTML";
 
-void genHtml(R,S)(R interlinear, S sink)
+string genCss(CssConfig cfg)
+{
+    auto app = appender!string;
+
+    app.put("body {\n");
+    app.put(cssBody);
+    if (cfg.maxWidth.length > 0)
+        app.formattedWrite("    max-width: %s;\n", cfg.maxWidth);
+    app.put("}\n");
+
+    app.put("div.interlinear {\n");
+    if (cfg.wordSpacing.length > 0)
+        app.formattedWrite("    word-spacing: %s;\n", cfg.wordSpacing);
+    app.put("}\n");
+
+    app.put(cssTable);
+    app.put(cssSecHeader);
+
+    foreach (i, lcfg; cfg.lines)
+    {
+        app.formattedWrite(cssLineStart, i);
+        if (lcfg.fontStyle.length > 0)
+            app.formattedWrite("    font-style: %s;\n", lcfg.fontStyle);
+        if (lcfg.fontVariant.length > 0)
+            app.formattedWrite("    font-variant: %s;\n", lcfg.fontVariant);
+        if (lcfg.fontWeight.length > 0)
+            app.formattedWrite("    font-weight: %s;\n", lcfg.fontWeight);
+        if (lcfg.fontSize.length > 0)
+            app.formattedWrite("    font-size: %s;\n", lcfg.fontSize);
+        if (lcfg.fontFamily.length > 0)
+            app.formattedWrite("    font-family: %s;\n", lcfg.fontFamily);
+        if (lcfg.color.length > 0)
+            app.formattedWrite("    color: %s;\n", lcfg.color);
+        if (lcfg.bgColor.length > 0)
+            app.formattedWrite("    background: %s;\n", lcfg.bgColor);
+        app.formattedWrite(cssLineEnd);
+    }
+
+    return app.data.stripRight;
+}
+
+void genHtml(R,S)(R interlinear, S sink, CssConfig cssCfg)
     if (isInputRange!R && is(ElementType!R : Section))
 {
-    put(sink, htmlPrologue);
+    formattedWrite(sink, htmlPrologue, genCss(cssCfg));
     foreach (sec; interlinear)
     {
         formattedWrite(sink, htmlSecHeading, sec.heading);
+        put(sink, htmlSecStart);
         foreach (morph; sec.morphemes)
         {
-            formattedWrite(sink, htmlMorph, morph);
+            put(sink, htmlMorphStart);
+            foreach (i, line; morph)
+            {
+                formattedWrite(sink, htmlMorphLine, i, line);
+            }
+            put(sink, htmlMorphEnd);
         }
+        put(sink, htmlSecEnd);
     }
     put(sink, htmlEpilogue);
 }
@@ -152,25 +245,146 @@ unittest
         "Бога.\tN:GEN\tGod.",
     ];
 
-    // FIXME
-    auto f = File("/tmp/test.html", "w");
-    sample.parseInput
-          .genHtml(f.lockingTextWriter);
-    f.close;
+    version(none)
+    {
+        auto f = File("/tmp/test.html", "w");
+        sample.parseInput
+              .genHtml(f.lockingTextWriter);
+        f.close;
+    }
+}
+
+CssConfig parseCssConfig(R)(R lines)
+    if (isInputRange!R && is(ElementType!R : const(char)[]))
+{
+    CssConfig cfg;
+    string section;
+    uint idx;
+
+    foreach (line; lines)
+    {
+        line = line.strip;
+        if (line.length == 0 || line.startsWith(';'))
+            continue;
+
+        if (line.startsWith('['))
+        {
+            if (!line.endsWith(']'))
+                throw new Exception("Invalid section: " ~ line.to!string);
+
+            assert(line.length >= 2);
+            section = line[1 .. $-1].to!string;
+
+            if (!section.startsWith("line"))
+                throw new Exception("Unknown section name: " ~
+                                    section.to!string);
+
+            auto n = section[4 .. $].to!uint;
+            if (n < 1)
+                throw new Exception("Invalid line number: " ~ n.to!string);
+
+            idx = n - 1;
+            if (cfg.lines.length <= idx)
+                cfg.lines.length = idx + 1;
+
+            continue;
+        }
+
+        auto parts = line.split("=");
+        if (parts.length != 2 || parts[0].length == 0)
+            throw new Exception("Invalid line: " ~ line.to!string);
+
+        auto key = parts[0];
+        auto value = parts[1].to!string;
+
+        if (section == "")  // global
+        {
+            switch (key)
+            {
+                case "maxwidth":    cfg.maxWidth = value;   break;
+                case "wordspacing": cfg.wordSpacing = value;   break;
+                case "linespacing": cfg.lineSpacing = value;   break;
+                default:
+                    throw new Exception("Unknown key: " ~ key.to!string);
+            }
+            continue;
+        }
+
+        // Line config
+        switch (key)
+        {
+            case "fontstyle":   cfg.lines[idx].fontStyle = value;   break;
+            case "fontvariant": cfg.lines[idx].fontVariant = value; break;
+            case "fontweight":  cfg.lines[idx].fontWeight = value;  break;
+            case "fontsize":    cfg.lines[idx].fontSize = value;    break;
+            case "fontfamily":  cfg.lines[idx].fontFamily = value;  break;
+            case "color":       cfg.lines[idx].color = value;       break;
+            case "background":  cfg.lines[idx].bgColor = value;     break;
+            default:
+                throw new Exception("Unknown key: " ~ key.to!string);
+        }
+    }
+    return cfg;
+}
+
+unittest
+{
+    auto input = [
+        "; Sample",
+        "maxwidth=60em",
+        "wordspacing=2em",
+        "linespacing=2ex",
+        "",
+        "[line1]",
+        "color=red",
+        "background=yellow",
+        "",
+        "[line2]",
+        "fontsize=1.5em",
+    ];
+
+    auto cfg = parseCssConfig(input);
+
+    assert(cfg.maxWidth == "60em");
+    assert(cfg.wordSpacing == "2em");
+    assert(cfg.lineSpacing == "2ex");
+
+    assert(cfg.lines.length == 2);
+    assert(cfg.lines[0].color == "red");
+    assert(cfg.lines[0].bgColor == "yellow");
+    assert(cfg.lines[1].fontSize == "1.5em");
 }
 
 int main(string[] args)
 {
-    if (args.length < 2)
+    try
     {
-        stderr.writefln("Usage: %s <input file>", args[0]);
-        return 1;
+        CssConfig cssCfg;
+
+        auto info = getopt(args,
+            "style|s", "Specify style configuration file",
+                (string key, string value) {
+                    cssCfg = parseCssConfig(File(value, "r").byLine);
+                },
+        );
+
+        if (info.helpWanted || args.length < 2)
+        {
+            writefln("Usage: %s <input file>", args[0]);
+            defaultGetoptPrinter("Available options:", info.options);
+            return 1;
+        }
+
+        auto f = File(args[1], "r");
+        f.byLine.parseInput.genHtml(stdout.lockingTextWriter, cssCfg);
+
+        return 0;
     }
-
-    auto f = File(args[1], "r");
-    f.byLine.parseInput.genHtml(stdout.lockingTextWriter);
-
-    return 0;
+    catch (Exception e)
+    {
+        stderr.writefln("Error: %s", e.msg);
+        return 2;
+    }
 }
 
 // vim:set sw=4 ts=4 et ai:
