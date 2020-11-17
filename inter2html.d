@@ -407,15 +407,22 @@ int main(string[] args)
                 },
         );
 
-        if (info.helpWanted || args.length < 2)
+        if (info.helpWanted || args.length < 3)
         {
-            writefln("Usage: %s <input file>", args[0]);
+            writefln("Usage: %s <input file> <output file>", args[0]);
             defaultGetoptPrinter("Available options:", info.options);
             return 1;
         }
 
-        auto f = File(args[1], "r");
-        f.byLine.parseInput.genHtml(stdout.lockingTextWriter, cssCfg);
+        auto infile = args[1];
+        auto outfile = args[2];
+
+        auto input = (infile == "-") ? stdin : File(infile, "r");
+        auto output = (outfile == "-") ? stdout : File(outfile, "w");
+
+        input.byLine
+             .parseInput
+             .genHtml(output.lockingTextWriter, cssCfg);
 
         return 0;
     }
