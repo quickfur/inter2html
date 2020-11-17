@@ -1,3 +1,5 @@
+.scons*
+.*teststamp
 .*.swp
 *.o
 inter2html
