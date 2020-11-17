@@ -14,7 +14,7 @@ struct CssConfig
 
     string maxWidth;
     string wordSpacing;
-    string lineHeight;
+    string lineSpacing;
     LineConfig[] lines;
 }
 
@@ -178,16 +178,18 @@ string genCss(CssConfig cfg)
         // to individual lines as well.
         subDivCss ~= format("    word-spacing: initial;");
     }
-    if (cfg.lineHeight.length > 0)
-    {
-        divCss ~= format("    line-height: %s;", cfg.lineHeight);
-        subDivCss ~= format("    line-height: initial;");
-    }
 
     if (divCss.length > 0)
         app.formattedWrite("div.interlinear {\n%-(%s\n%)\n}\n", divCss);
     if (subDivCss.length > 0)
         app.formattedWrite("div.interlinear td {\n%-(%s\n%)\n}\n", subDivCss);
+
+    if (cfg.lineSpacing.length > 0)
+    {
+        app.put("table.interlinear tr:last-child td {\n");
+        app.formattedWrite("    padding-bottom: %s;\n", cfg.lineSpacing);
+        app.put("}\n");
+    }
 
     app.put(cssTableStart);
     app.put(cssTableEnd);
@@ -324,7 +326,7 @@ CssConfig parseCssConfig(R)(R lines)
             {
                 case "maxwidth":    cfg.maxWidth = value;   break;
                 case "wordspacing": cfg.wordSpacing = value;   break;
-                case "lineheight":  cfg.lineHeight = value;   break;
+                case "linespacing": cfg.lineSpacing = value;   break;
                 default:
                     throw new Exception("Unknown key: " ~ key.to!string);
             }
@@ -354,7 +356,7 @@ unittest
         "; Sample",
         "maxwidth=60em",
         "wordspacing=2em",
-        "lineheight=2ex",
+        "linespacing=2ex",
         "",
         "[line1]",
         "color=red",
@@ -368,7 +370,7 @@ unittest
 
     assert(cfg.maxWidth == "60em");
     assert(cfg.wordSpacing == "2em");
-    assert(cfg.lineHeight == "2ex");
+    assert(cfg.lineSpacing == "2ex");
 
     assert(cfg.lines.length == 2);
     assert(cfg.lines[0].color == "red");
