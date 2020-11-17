@@ -1,5 +1,8 @@
 .scons*
 .*teststamp
 .*.swp
+*.exe
 *.o
+*.obj
 inter2html
+release

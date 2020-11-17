@@ -7,6 +7,10 @@ env = Environment(
     DCOPTFLAGS = [ '-O' ],
 )
 
+sources = Split("""
+    inter2html.d
+""")
+
 # Convenience shorthand for building both the 'real' executable and a
 # unittest-only executable.
 def DProgram(env, target, sources):
@@ -26,4 +30,13 @@ def DProgram(env, target, sources):
 AddMethod(Environment, DProgram)
 
 # Main program
-env.DProgram('inter2html', 'inter2html.d')
+env.DProgram('inter2html', sources)
+
+# Cross-compiled Windows build
+winenv = env.Clone(
+    DC = '/usr/src/d/ldc/latest/bin/ldc2',
+    DCOPTFLAGS = [ '-O2' ],
+)
+winenv.Append(DCFLAGS = [ '-mtriple=x86_64-windows-msvc' ])
+winenv.Command('inter2html.exe', sources, "$DC $DCFLAGS $DCOPTFLAGS -of$TARGET $SOURCES")
+
