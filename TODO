@@ -1,1 +1,4 @@
-- Add CSS config.
+- Consider running a web service for this instead. Trying to educate a GUI user
+  on using command-lines, and worse yet, inside a Windows emulator, is just ...
+  too much. Just make it a darned webservice and call it a day.
++ Add CSS config.
