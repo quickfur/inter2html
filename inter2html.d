@@ -1,5 +1,8 @@
 /**
  * Simple HTML interlinear generator from tab-separated input.
+ *
+ * Copyright: H. S. Teoh, 2020
+ * License:  [http://www.boost.org/LICENSE_1_0.txt|Boost License 1.0].
  */
 module inter2html;
 

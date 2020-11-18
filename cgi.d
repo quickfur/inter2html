@@ -7,6 +7,9 @@
  * and install the binary as 'index' in that directory.
  *
  * URL will be /inter2html_cgi/index.
+ *
+ * Copyright: H. S. Teoh, 2020
+ * License:  [http://www.boost.org/LICENSE_1_0.txt|Boost License 1.0].
  */
 module cgi;
 

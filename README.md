@@ -11,15 +11,21 @@ There are two front ends:
 
 - A CGI interface that can be hooked to a web server for browser access.
 
+License
+-------
+
+[Boost License version 1.0](http://www.boost.org/LICENSE_1_0.txt)
+
+
 Building
 --------
 
 Build requirements:
 
 - A Posix OS, or equivalent environment (tested on Linux).
-- Git (for cloning Adam Ruppe's D library, arsd)
-- SCons (http://scons.org/)
-- D compiler, preferably LDC (https://github.com/ldc-developers/ldc/releases/)
+- [Git](https://git-scm.com/) (for cloning Adam Ruppe's D library, arsd)
+- [SCons](https://scons.org/)
+- D compiler, preferably [LDC](https://github.com/ldc-developers/ldc/releases/)
 
 Building is very easy. Simply run SCons:
 
