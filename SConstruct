@@ -2,7 +2,7 @@
 
 env = Environment(
     DC = '/usr/src/d/bin/dmd',
-    DCFLAGS = [ '-i' ],
+    DCFLAGS = [ ],
     DCTESTFLAGS = [ '-unittest' ],
     DCOPTFLAGS = [ '-O' ],
 )
@@ -42,7 +42,12 @@ AddMethod(Environment, DProgram)
 env.DProgram('inter2html', sources)
 
 # CGI driver
-env.DProgram('inter2html_cgi', cgi_sources)
+cgienv = env.Clone(
+    DC = '/usr/src/d/ldc/latest/bin/ldc2',
+    DCOPTFLAGS = [ '-O2' ],
+)
+cgienv.Append(DCFLAGS = [ '-J.' ])
+cgienv.DProgram('inter2html.cgi', cgi_sources)
 
 # Cross-compiled Windows build
 winenv = env.Clone(

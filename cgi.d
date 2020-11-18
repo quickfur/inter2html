@@ -57,17 +57,19 @@ main {
 <h1>inter2html</h1>
 <h2>Text to interlinear HTML tool</h2>
 
-<form method="POST" action="%s" enctype="multipart/form-data">
+<form method="POST" action="%1$s" enctype="multipart/form-data">
   <fieldset>
     <legend>Input (required)</legend>
     <p>Upload your input file here. It should be a plain text file in the
     required format.</p>
+    <p><a href="%1$s?sample=txt" download="sample.txt">[Download a sample input file]</a></p>
     <input id="inputfile" type="file" name="inputfile" accept=".txt" required />
   </fieldset>
 
   <fieldset>
     <legend>Style configuration (optional)</legend>
     <p>Upload a style INI file here to configure the style of the output.</p>
+    <p><a href="%1$s?sample=ini" download="sample.ini">[Download a sample .ini file]</a></p>
     <input id="inifile" type="file" name="inifile" accept=".ini, .txt" />
   </fieldset>
 
@@ -122,7 +124,16 @@ void handlePost(Cgi cgi)
     // If we got here, it means user forgot to specify input. Which means
     // either his browser is broken, or he didn't get here via the form. So
     // send him back there.
-    cgi.setResponseLocation("/inter2html/index");
+    cgi.setResponseLocation(cgi.scriptName);
+}
+
+static immutable string iniSample = import("sample1.ini");
+static immutable string txtSample = import("sample1.txt");
+
+void sendSampleFile(Cgi cgi, string data)
+{
+    cgi.setResponseContentType("text/plain; charset=utf-8");
+    cgi.write(data);
 }
 
 void cgiMain(Cgi cgi)
@@ -131,7 +142,17 @@ void cgiMain(Cgi cgi)
     {
         case Cgi.RequestMethod.GET:
             cgi.setResponseContentType("text/html; charset=utf-8");
-            cgi.write(mainPage.format(cgi.scriptName));
+            if ("sample" in cgi.get)
+            {
+                switch (cgi.get["sample"])
+                {
+                    case "ini": return sendSampleFile(cgi, iniSample);
+                    case "txt": return sendSampleFile(cgi, txtSample);
+                    default:    break;
+                }
+            }
+            else
+                cgi.write(mainPage.format(cgi.scriptName));
             return;
 
         case Cgi.RequestMethod.POST:
