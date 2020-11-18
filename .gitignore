@@ -5,4 +5,5 @@
 *.o
 *.obj
 inter2html
+inter2html_cgi
 release
