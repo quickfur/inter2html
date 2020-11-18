@@ -7,8 +7,17 @@ env = Environment(
     DCOPTFLAGS = [ '-O' ],
 )
 
-sources = Split("""
+common_sources = Split("""
     inter2html.d
+""")
+
+sources = common_sources + Split("""
+    main.d
+""")
+
+cgi_sources = common_sources + Split("""
+    cgi.d
+    arsd/cgi.d
 """)
 
 # Convenience shorthand for building both the 'real' executable and a
@@ -31,6 +40,9 @@ AddMethod(Environment, DProgram)
 
 # Main program
 env.DProgram('inter2html', sources)
+
+# CGI driver
+env.DProgram('inter2html_cgi', cgi_sources)
 
 # Cross-compiled Windows build
 winenv = env.Clone(
