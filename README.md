@@ -22,16 +22,19 @@ Building
 
 Build requirements:
 
-- A Posix OS, or equivalent environment (tested on Linux).
+- A Posix OS, or equivalent environment (tested on Linux)
 - [Git](https://git-scm.com/) (for cloning Adam Ruppe's D library, arsd)
 - [SCons](https://scons.org/)
 - D compiler, preferably [LDC](https://github.com/ldc-developers/ldc/releases/)
 
-Building is very easy. Simply run SCons:
+Build steps:
 
-````
-scons
-````
+- Edit `SConstruct`. Change the `ldc` setting at the top of the file to the
+  path to your local installation of LDC.
+
+- Run SCons to build:
+
+    scons
 
 If all goes well, it will produce 3 binaries:
 

@@ -1,10 +1,12 @@
 #!/usr/bin/scons
 
+ldc = '/usr/src/d/ldc/latest/bin/ldc2'
+
 env = Environment(
-    DC = '/usr/src/d/bin/dmd',
+    DC = ldc,
     DCFLAGS = [ ],
     DCTESTFLAGS = [ '-unittest' ],
-    DCOPTFLAGS = [ '-O' ],
+    DCOPTFLAGS = [ '-O2' ],
 )
 
 common_sources = Split("""
@@ -42,18 +44,12 @@ AddMethod(Environment, DProgram)
 env.DProgram('inter2html', sources)
 
 # CGI driver
-cgienv = env.Clone(
-    DC = '/usr/src/d/ldc/latest/bin/ldc2',
-    DCOPTFLAGS = [ '-O2' ],
-)
+cgienv = env.Clone()
 cgienv.Append(DCFLAGS = [ '-J.' ])
 cgienv.DProgram('inter2html.cgi', cgi_sources)
 
 # Cross-compiled Windows build
-winenv = env.Clone(
-    DC = '/usr/src/d/ldc/latest/bin/ldc2',
-    DCOPTFLAGS = [ '-O2' ],
-)
+winenv = env.Clone()
 winenv.Append(DCFLAGS = [ '-mtriple=x86_64-windows-msvc' ])
 winenv.Command('inter2html.exe', sources, "$DC $DCFLAGS $DCOPTFLAGS -of$TARGET $SOURCES")
 
