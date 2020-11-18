@@ -9,6 +9,7 @@ env = Environment(
 
 sources = Split("""
     inter2html.d
+    main.d
 """)
 
 # Convenience shorthand for building both the 'real' executable and a
