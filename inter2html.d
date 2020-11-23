@@ -21,6 +21,7 @@ struct CssConfig
     string lineSpacing;
 
     FontConfig heading;
+    FontConfig freeTrans;
     FontConfig[] lines;
 }
 
@@ -191,6 +192,10 @@ static immutable htmlMorphEnd = q"ENDHTML
 </table>
 ENDHTML";
 
+static immutable htmlSecFreeTrans = q"ENDHTML
+<p>%s</p>
+ENDHTML";
+
 static immutable htmlSecEnd = q"ENDHTML
 </div>
 ENDHTML";
@@ -234,6 +239,9 @@ string genCss(CssConfig cfg)
         ],
 
         "div.interlinear": [],
+        "div.interlinear p": [
+            "margin-top: 0;",
+        ],
         "div.interlinear td": [],
         "table.interlinear tr:last-child td": [],
 
@@ -261,6 +269,7 @@ string genCss(CssConfig cfg)
     }
 
     css["h6"] ~= genCssFont(cfg.heading);
+    css["div.interlinear p"] ~= genCssFont(cfg.freeTrans);
 
     foreach (i, lcfg; cfg.lines)
     {
@@ -303,6 +312,10 @@ void genHtml(R,S)(R interlinear, S sink, CssConfig cssCfg)
             }
             put(sink, htmlMorphEnd);
         }
+
+        if (sec.freeTrans.length > 0)
+            formattedWrite(sink, htmlSecFreeTrans, sec.freeTrans);
+
         put(sink, htmlSecEnd);
     }
     put(sink, htmlEpilogue);
@@ -368,6 +381,11 @@ CssConfig parseCssConfig(R)(R lines)
             if (section == "heading")
             {
                 font = &cfg.heading;
+                continue;
+            }
+            else if (section == "freetrans")
+            {
+                font = &cfg.freeTrans;
                 continue;
             }
 

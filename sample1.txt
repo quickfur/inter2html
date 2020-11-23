@@ -12,6 +12,7 @@ John 1:1
 Слово	N:NOM	Word
 было	V:P:NEUT	was
 Бог.	N:NOM	God.
+In the beginning was the Word, and the Word was with God, and the Word was God.
 
 John 1:2
 Оно	3SG:NEUT:NOM	He
@@ -20,6 +21,7 @@ John 1:2
 начале	N:PREP	beginning
 у	PREP	with
 Бога.	N:GEN	God.
+He was in the beginning with God.
 
 John 1:3
 Всё	N:NOM	All
@@ -34,6 +36,7 @@ John 1:3
 возникло,	V:P:NEUT	came into being
 что	INDEF:NOM	which
 возникло.	V:P:NEUT	came into being.
+All things came into being through Him, and apart from Him not one thing came into being, which has come into being.
 
 John 1:4
 В	PREP	In
@@ -45,3 +48,4 @@ John 1:4
 была	V:P:FEM	was
 светом	N:INSTR	light
 людей.	N:PL:GEN	of men.
+In Him was life, and the life was the light of men.
