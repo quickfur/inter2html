@@ -4,3 +4,6 @@
   too much. Just make it a darned webservice and call it a day.
    * Hooray, arsd.cgi comes to the rescue! It's pretty awesome, like the rest
      of arsd.
++ Implement free translation line.
+   + Can just make it an optional last line that contains no tabs (so it won't
+     be mistaken for another interlinear line).

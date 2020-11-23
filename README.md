@@ -67,6 +67,11 @@ Subsequent lines consists of tab-separated fields. Each line corresponds with a
 word group in the interlinear, and each field corresponds to a line in the
 output.
 
+At the end of each block, there's an optional line for a free translation line
+(rendered separately and not column-aligned with the interlinear). This line
+must come last in the block, and must not contain any tab characters or any
+embedded newlines.
+
 Example:
 
     John 1:1
@@ -83,6 +88,7 @@ Example:
     Слово	N:NOM	Word
     было	V:P:NEUT	was
     Бог.	N:NOM	God.
+    In the beginning was the Word, and the Word was with God, and the Word was God.
 
 The first line indicates the heading of the this block.  The subsequent lines
 consist of 3 fields each:
@@ -90,6 +96,9 @@ consist of 3 fields each:
 - The first field is a morpheme unit from the source language;
 - The second field is the grammatical tag of that morpheme unit;
 - The third field is the English gloss of that morpheme unit.
+
+The last line, which contains no tabs, is a free translation line. It is
+optional, and may be omitted, in which case it will be skipped in the output.
 
 
 Style configuration
