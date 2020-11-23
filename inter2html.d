@@ -28,6 +28,7 @@ struct Section
 {
     string heading;
     string[][] morphemes;
+    string freeTrans;
 }
 
 auto parseMorphemes(R)(R lines)
@@ -52,6 +53,22 @@ unittest
     ]));
 }
 
+Section parseSection(R)(R lines)
+    if (isInputRange!R && is(ElementType!R : const(char)[]))
+{
+    Section s;
+    s.heading = lines.takeOne.front.idup;
+    s.morphemes = lines.dropOne.parseMorphemes.array;
+
+    if (s.morphemes.length > 0 && s.morphemes[$-1].length == 1)
+    {
+        s.freeTrans = s.morphemes[$-1][0];
+        s.morphemes = s.morphemes[0 .. $-1];
+    }
+
+    return s;
+}
+
 auto parseInput(R)(R lines)
     if (isInputRange!R && is(ElementType!R : const(char)[]))
 {
@@ -59,8 +76,7 @@ auto parseInput(R)(R lines)
     return lines.map!(l => l.idup)
                 .array
                 .split(blankLine)
-                .map!(ll => Section(ll.takeOne.front.idup,
-                                    ll.dropOne.parseMorphemes.array));
+                .map!(ll => parseSection(ll));
 }
 
 unittest
@@ -95,6 +111,45 @@ unittest
             [ "у", "PREP", "with" ],
             [ "Бога", "N:GEN", "God" ],
         ])
+    ]));
+}
+
+unittest
+{
+    auto sample = [
+        "John 1:1",
+        "В\tPREP\tIn",
+        "начале\tN:PREP\tbeginning",
+        "было\tV:P:NEUT\twas",
+        "Слово\tN:NOM\tWord",
+        "In the beginning was the Word",
+        "",
+        "John 1:2",
+        "Оно\tPRON:NEUT:SG:NOM\tHe",
+        "было\tV:P:NEUT\twas",
+        "в\tPREP\tin",
+        "начале\tN:PREP\tbeginning",
+        "у\tPREP\twith",
+        "Бога\tN:GEN\tGod",
+        "He was in the beginning with God",
+    ];
+
+    assert(sample.parseInput.equal([
+        Section("John 1:1", [
+                [ "В", "PREP", "In" ],
+                [ "начале", "N:PREP", "beginning" ],
+                [ "было", "V:P:NEUT", "was" ],
+                [ "Слово", "N:NOM", "Word" ],
+            ], "In the beginning was the Word"),
+
+        Section("John 1:2", [
+                [ "Оно", "PRON:NEUT:SG:NOM", "He" ],
+                [ "было", "V:P:NEUT", "was" ],
+                [ "в", "PREP", "in" ],
+                [ "начале", "N:PREP", "beginning" ],
+                [ "у", "PREP", "with" ],
+                [ "Бога", "N:GEN", "God" ],
+            ], "He was in the beginning with God"),
     ]));
 }
 
