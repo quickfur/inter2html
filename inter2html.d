@@ -19,6 +19,7 @@ struct CssConfig
     string maxWidth;
     string wordSpacing;
     string lineSpacing;
+    string innerLineSpacing;
 
     FontConfig heading;
     FontConfig freeTrans;
@@ -268,6 +269,13 @@ string genCss(CssConfig cfg)
         //    "margin-top: -%s;".format(cfg.lineSpacing);
     }
 
+    if (cfg.innerLineSpacing.length > 0)
+    {
+        css["table.interlinear"] ~= "border-collapse: separate;";
+        css["table.interlinear"] ~= "border-spacing: 0 %s;"
+                                    .format(cfg.innerLineSpacing);
+    }
+
     css["h6"] ~= genCssFont(cfg.heading);
     css["div.interlinear p"] ~= genCssFont(cfg.freeTrans);
 
@@ -418,6 +426,9 @@ CssConfig parseCssConfig(R)(R lines)
                 case "maxwidth":    cfg.maxWidth = value;   break;
                 case "wordspacing": cfg.wordSpacing = value;   break;
                 case "linespacing": cfg.lineSpacing = value;   break;
+                case "innerlinespacing":
+                    cfg.innerLineSpacing = value;
+                    break;
                 default:
                     throw new Exception("Unknown key: " ~ key.to!string);
             }
@@ -448,6 +459,7 @@ unittest
         "maxwidth=60em",
         "wordspacing=2em",
         "linespacing=2ex",
+        "innerlinespacing=1.5ex",
         "",
         "[line1]",
         "color=red",
@@ -465,6 +477,7 @@ unittest
     assert(cfg.maxWidth == "60em");
     assert(cfg.wordSpacing == "2em");
     assert(cfg.lineSpacing == "2ex");
+    assert(cfg.innerLineSpacing == "1.5ex");
 
     assert(cfg.heading.fontFamily == "sans-serif");
 
