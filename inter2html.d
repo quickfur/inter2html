@@ -20,6 +20,7 @@ struct CssConfig
     string wordSpacing;
     string lineSpacing;
     string innerLineSpacing;
+    string freeTransSpacing;
 
     FontConfig heading;
     FontConfig freeTrans;
@@ -240,9 +241,7 @@ string genCss(CssConfig cfg)
         ],
 
         "div.interlinear": [],
-        "div.interlinear p": [
-            "margin-top: 0;",
-        ],
+        "div.interlinear p": [],
         "div.interlinear td": [],
         "table.interlinear tr:last-child td": [],
 
@@ -278,6 +277,10 @@ string genCss(CssConfig cfg)
 
     css["h6"] ~= genCssFont(cfg.heading);
     css["div.interlinear p"] ~= genCssFont(cfg.freeTrans);
+    css["div.interlinear p"] ~= [
+        format("margin-top: %s;", cfg.freeTransSpacing ?
+                                  cfg.freeTransSpacing : "0")
+    ];
 
     foreach (i, lcfg; cfg.lines)
     {
@@ -429,6 +432,9 @@ CssConfig parseCssConfig(R)(R lines)
                 case "innerlinespacing":
                     cfg.innerLineSpacing = value;
                     break;
+                case "freetransspacing":
+                    cfg.freeTransSpacing = value;
+                    break;
                 default:
                     throw new Exception("Unknown key: " ~ key.to!string);
             }
@@ -460,6 +466,7 @@ unittest
         "wordspacing=2em",
         "linespacing=2ex",
         "innerlinespacing=1.5ex",
+        "freetransspacing=0.7ex",
         "",
         "[line1]",
         "color=red",
@@ -478,6 +485,7 @@ unittest
     assert(cfg.wordSpacing == "2em");
     assert(cfg.lineSpacing == "2ex");
     assert(cfg.innerLineSpacing == "1.5ex");
+    assert(cfg.freeTransSpacing == "0.7ex");
 
     assert(cfg.heading.fontFamily == "sans-serif");
 
