@@ -6,7 +6,7 @@ env = Environment(
     DC = ldc,
     DCFLAGS = [ ],
     DCTESTFLAGS = [ '-unittest' ],
-    DCOPTFLAGS = [ '-O2' ],
+    DCOPTFLAGS = [ '-O2', '--static' ],
 )
 
 common_sources = Split("""
