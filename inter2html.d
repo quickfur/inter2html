@@ -175,6 +175,7 @@ static immutable cssBody = q"ENDCSS
 ENDCSS";
 
 static immutable htmlSecHeading = q"ENDHTML
+<div class="interlinear-block">
 <h6>%s</h6>
 ENDHTML";
 
@@ -199,7 +200,7 @@ static immutable htmlSecFreeTrans = q"ENDHTML
 ENDHTML";
 
 static immutable htmlSecEnd = q"ENDHTML
-</div>
+</div></div>
 ENDHTML";
 
 static immutable htmlEpilogue = q"ENDHTML
@@ -289,6 +290,15 @@ string genCss(CssConfig cfg)
     }
 
     auto app = appender!string;
+
+    // Prevent page breaks in the middle of a verse (feature request)
+    app.formattedWrite("@media print {\n");
+    app.formattedWrite("\tdiv.interlinear-block {\n");
+    app.formattedWrite("\t\tpage-break-inside: avoid;\n");
+    app.formattedWrite("\t\tbreak-inside: avoid;\n");
+    app.formattedWrite("\t}\n");
+    app.formattedWrite("}\n");
+
     foreach (selector; css.keys.sort)
     {
         auto props = css[selector];

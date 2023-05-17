@@ -19,6 +19,7 @@ sources = common_sources + Split("""
 
 cgi_sources = common_sources + Split("""
     cgi.d
+    arsd/core.d
     arsd/cgi.d
 """)
 
