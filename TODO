@@ -7,3 +7,4 @@
 + Implement free translation line.
    + Can just make it an optional last line that contains no tabs (so it won't
      be mistaken for another interlinear line).
++ Implement specification of font face.

@@ -12,6 +12,7 @@ struct FontConfig
 {
     string fontStyle, fontVariant, fontWeight, fontSize, fontFamily;
     string color, bgColor;
+    string url;
 }
 
 struct CssConfig
@@ -299,6 +300,20 @@ string genCss(CssConfig cfg)
     app.formattedWrite("\t}\n");
     app.formattedWrite("}\n");
 
+    // Generate webfont font-face declarations.
+    foreach (lcfg; cfg.lines)
+    {
+        if (lcfg.url.empty) continue;
+        app.formattedWrite("@font-face {\n");
+        app.formattedWrite("\tfont-family: %s;\n", lcfg.fontFamily);
+        if (lcfg.fontStyle.length > 0)
+            app.formattedWrite("\tfont-style: %s;\n", lcfg.fontStyle);
+        if (lcfg.fontWeight.length > 0)
+            app.formattedWrite("\tfont-weight: %s;\n", lcfg.fontWeight);
+        app.formattedWrite("\tsrc: url(%s);\n", lcfg.url);
+        app.formattedWrite("}\n");
+    }
+
     foreach (selector; css.keys.sort)
     {
         auto props = css[selector];
@@ -461,6 +476,7 @@ CssConfig parseCssConfig(R)(R lines)
             case "fontfamily":  font.fontFamily = value;    break;
             case "color":       font.color = value;         break;
             case "background":  font.bgColor = value;       break;
+            case "url":         font.url = value;           break;
             default:
                 throw new Exception("Unknown key: " ~ key.to!string);
         }
