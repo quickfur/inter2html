@@ -1,4 +1,3 @@
-- Implement specification of font face.
 + Add CSS config.
 + Consider running a web service for this instead. Trying to educate a GUI user
   on using command-lines, and worse yet, inside a Windows emulator, is just ...
@@ -8,3 +7,4 @@
 + Implement free translation line.
    + Can just make it an optional last line that contains no tabs (so it won't
      be mistaken for another interlinear line).
++ Implement specification of font face.
